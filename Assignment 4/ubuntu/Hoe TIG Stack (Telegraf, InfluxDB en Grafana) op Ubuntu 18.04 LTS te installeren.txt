@@ -1,0 +1,84 @@
+### 1)Installeer InfluxDB ###
+### voeg de influxdata-sleutel toe
+sudo curl -sL https://repos.influxdata.com/influxdb.key | sudo apt-key add -
+
+### Voeg de influxdata-repository toe
+source /etc/lsb-release echo "deb https://repos.influxdata.com/${DISTRIB_ID,,} ${DISTRIB_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
+
+### Werk nu de repository bij en installeer het 'influxdb'-pakket met behulp van het onderstaande apt-commando.
+sudo apt update
+sudo apt install influxdb -y
+
+### Nadat de installatie is voltooid, start u de influxdb-service en schakelt u deze in om elke keer bij het opstarten van het systeem te starten.
+sudo systemctl start influxdb
+sudo systemctl enable influxdb
+
+### Controleer nu de geopende poorten op het systeem.
+netstat -plntu
+
+
+
+### 2)Maak een InfluxDB-database en -gebruiker ###
+### Voer de onderstaande opdracht 'influx' uit.
+influx
+
+### Maak een nieuwe database en gebruiker 'telegraf' met het wachtwoord 'hakase-ndlr' door onderstaande influxdb-queries uit te voeren.
+create database telegraf
+create user telegraf with password 'hakase-ndlr'
+
+### Controleer nu de database en de gebruiker.
+show databases
+show users
+
+
+
+### 3)Installeer Telegraf Agent ###
+### Installeer het telegraf-pakket met behulp van de onderstaande apt-opdracht.
+sudo apt install telegraf -y
+
+### Nadat de installatie is voltooid, start u de telegrafservice en schakelt u deze elke keer in bij het opstarten van het systeem.
+sudo systemctl start telegraf
+sudo systemctl enable telegraf
+
+### De telegraf-agent is actief, controleer het met de onderstaande opdracht.
+sudo systemctl status telegraf
+
+
+
+### 4)Configureer Telegraf ###
+### Ga naar de map '/ etc / telegraf' en hernoem het standaard configuratiebestand.
+cd /etc/telegraf/
+mv telegraf.conf telegraf.conf.default
+
+### Maak nu een nieuwe andere configuratie 'telegraf.conf' met behulp van de  vim- editor.
+vim telegraf.conf
+
+### Telegraf biedt een telegraf-opdracht om de configuratie te beheren, inclusief het genereren van de configuratie zelf, voer de onderstaande opdracht uit.
+telegraf config -input-filter cpu:mem:disk:swap:system -output-filter influxdb > telegraf.conf
+cat telegraf.conf
+
+### Start de telegraafservice opnieuw en controleer of er geen fout is.
+sudo systemctl restart telegraf
+
+### Test nu de telegrafinstellingen met de onderstaande opdracht.
+sudo telegraf -test -config /etc/telegraf/telegraf.conf --input-filter cpu
+sudo telegraf -test -config /etc/telegraf/telegraf.conf --input-filter net
+sudo telegraf -test -config /etc/telegraf/telegraf.conf --input-filter mem
+
+
+
+### 5)Installeer Grafana ###
+### Voeg de grafana-sleutel en repository toe.
+sudo curl https://packagecloud.io/gpg.key | sudo apt-key add -
+echo 'deb https://packagecloud.io/grafana/stable/debian/ stretch main' > /etc/apt/sources.list.d/grafana.list
+
+### Werk de repository bij en installeer het grafana-pakket met de onderstaande apt-opdracht.
+sudo apt update
+sudo apt install grafana -y
+
+### Nadat de installatie is voltooid, start u de grafana-service en schakelt u deze in elke keer dat het systeem wordt opgestart.
+sudo systemctl start grafana-server
+sudo systemctl enable grafana-server
+
+### De grafana-server draait op standaard poort '3000', controleer deze met netstat.
+netstat -plntu
